@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>포르투갈어 입력기</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-beta/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans+Condensed" rel="stylesheet">
+  <style>
+    *,
+    html,
+    body {
+      margin: 0;
+      box-sizing: border-box;
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+    }
+
+    .t-container {
+      height: 100%;
+    }
+
+    #t {
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+      width: 100%;
+      height: 100%;
+      font-size: 30px;
+      line-height: 40px;
+    }
+
+    .no-mp {
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-wrapper {
+      height: 56px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="t-container">
+    <nav>
+      <div class="nav-wrapper green lighten-1">
+
+        <a href="#" class="brand-logo" style="padding-left: 12px">포르투갈어 입력기</a>
+      </div>
+    </nav>
+    <div class="card green lighten-2 no-mp">
+      <div class="card-content white-text" style="padding: 12px">
+        <p class="card-title">ALT-E + a, e, i, o, u => á, é, í, ó, ú</p>
+        <p class="card-title">ALT-N + a, o => ã, õ</p>
+        <p class="card-title">ALT-I + a, e, o => â, ê, ô </p>
+        <p class="card-title">ALT + c => ç</p>
+        <p class="card-title">` + a, i => à, ì</p>
+      </div>
+    </div>
+    <textarea id="t" cols="30" rows="10" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+  </div>
+
+  <script src="keymage.min.js"></script>
+  <script>
+    'use strict';
+
+    String.prototype.insertAt = function (index, text) {
+      return this.substr(0, index) + text + this.substr(index);
+    };
+
+    String.prototype.replaceAt = function (index, replacement) {
+      return this.substr(0, index) + replacement + this.substr(index + replacement.length);
+    };
+
+    var cursorFocus = function (elem) {
+      var x = window.scrollX,
+        y = window.scrollY;
+      elem.focus();
+      window.scrollTo(x, y);
+    }
+
+    var stress = {
+      acute: {
+        a: 'á',
+        A: 'Á',
+        e: 'é',
+        E: 'É',
+        i: 'í',
+        I: 'Í',
+        o: 'ó',
+        O: 'Ó',
+        u: 'ú ',
+        U: 'Ú'
+      },
+      circum: {
+        a: 'â',
+        A: 'Â',
+        e: 'ê',
+        E: 'Ê',
+        i: 'î',
+        I: 'Î',
+        o: 'ô',
+        O: 'Ô',
+        u: 'û',
+        U: 'Û'
+      },
+      grave: {
+        a: 'à',
+        A: 'À',
+        e: 'è',
+        E: 'È',
+        i: 'ì',
+        I: 'Ì',
+        o: 'ì',
+        O: 'Ì',
+        u: 'ù',
+        U: 'Ù'
+      },
+      tilde: {
+        a: 'ã',
+        A: 'Ã',
+        o: 'õ',
+        O: 'Õ',
+        n: 'ñ',
+        n: 'Ñ'
+      }
+    };
+
+    function cutLast(str) {
+      return str.substring(0, str.length - 1);
+    }
+
+    function setStessKey(c) {
+      keymage(c, stressify(c));
+    }
+
+    function setMeta(ctx, mark) {
+      return function (e) {
+        var pos = t.selectionStart;
+        if (pos < t.selectionEnd) {
+          t.value = t.value.substr(0, pos) + mark + t.value.substr(t.selectionEnd);
+        } else {
+          t.value = t.value.insertAt(pos, mark);
+        }
+        t.selectionEnd = pos + 1;
+        e.preventDefault();
+        e.stopPropagation()
+        keymage.setScope(ctx);
+        return false;
+      };
+    }
+
+    var isShift = { shift: true, Shift: true }
+    function stressify(e) {
+      var ctx = keymage.getScope();
+      if (ctx && stress[ctx] ) {
+        if (stress[ctx][e.key]) {        
+          var pos = t.selectionStart - 1;
+          t.value = t.value.replaceAt(pos, stress[ctx][e.key]);
+          t.selectionEnd = pos + 1;
+          e.preventDefault();
+          e.stopPropagation()
+          keymage.setScope(null);
+          return false;
+        }
+        if (isShift[e.key]) {
+          return;
+        }
+      }
+      keymage.setScope(null);
+    }
+
+    keymage('alt-e', setMeta('acute', '´'));
+    keymage('alt-i', setMeta('circum', 'ˆ'));
+    keymage('alt-n', setMeta('tilde', '˜'));
+    keymage('`', setMeta('grave', '`'));
+    keymage('shift-alt-c', setMeta(null, 'Ç'));
+    keymage('alt-c', setMeta(null, 'ç'));
+
+    var t = document.getElementById('t');
+    cursorFocus(t)
+    t.addEventListener('keydown', stressify);
+  </script>
+</body>
+
+</html>
